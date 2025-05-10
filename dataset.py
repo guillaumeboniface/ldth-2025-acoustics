@@ -96,6 +96,27 @@ class LDTH2025DatasetMel(Dataset):
         mel_spectrogram = self.mel_spectrogram(audio)
         log_mel_spectrogram = self.log_mel_spectrogram(mel_spectrogram)
         return log_mel_spectrogram, torch.tensor(label)
+
+class LDTH2025DatasetRaw(Dataset):
+    def __init__(self, data_path: str, split: str = "train"):
+        self.data_path = os.path.join(data_path, split)
+        self.split = split
+        self.classes = os.listdir(self.data_path)
+        self.classes.sort()
+        self.class_to_idx = {cls: i for i, cls in enumerate(self.classes)}
+        self.dataset = []
+        for class_name in os.listdir(self.data_path):
+            for file in os.listdir(os.path.join(self.data_path, class_name)):
+                self.dataset.append((os.path.join(self.data_path, class_name, file), self.class_to_idx[class_name]))
+
+    def __len__(self):
+        return len(self.dataset)
+    
+    @lru_cache()
+    def __getitem__(self, idx):
+        audio_path, label = self.dataset[idx]
+        audio, sr = torchaudio.load(audio_path, normalize=True)
+        return audio, torch.tensor(label)
     
 if __name__ == "__main__":
     dataset = LDTH2025Dataset(data_path="data/raw")
@@ -109,5 +130,9 @@ if __name__ == "__main__":
     print(mel_dataset[0])
     print("Mel: ", mel_dataset[0][0].shape)
     
+    raw_dataset = LDTH2025DatasetRaw(data_path="data/raw")
+    print(len(raw_dataset))
+    print(raw_dataset[0])
+    print("Raw: ", raw_dataset[0][0].shape)
     
         

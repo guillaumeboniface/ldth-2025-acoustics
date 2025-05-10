@@ -1,5 +1,5 @@
-from model import MelClassifier
-from dataset import LDTH2025DatasetMel
+from model import TinyMelClassifier
+from dataset import LDTH2025DatasetRaw
 from torch.utils.data import DataLoader
 import torch
 import itertools
@@ -11,16 +11,16 @@ if __name__ == "__main__":
     torch.manual_seed(0)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = MelClassifier().to(device)
-    train_dataset = LDTH2025DatasetMel(data_path="data/raw", split="train")
-    test_dataset = LDTH2025DatasetMel(data_path="data/raw", split="test")
+    model = TinyMelClassifier().to(device)
+    train_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="train")
+    test_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="test")
 
     batch_size = 16
     epochs = 100
     learning_rate = 1e-4
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=False)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     criterion = torch.nn.CrossEntropyLoss()
@@ -64,7 +64,7 @@ if __name__ == "__main__":
         epoch_loss = sum(epoch_loss) / len(epoch_loss)
         epoch_test_loss = sum(epoch_test_loss) / len(epoch_test_loss)
         epoch_accuracy = sum(epoch_accuracy) / len(epoch_accuracy)
-        print(f"\n[Epoch {epoch+1}/{epochs}] Loss: {epoch_loss:.4f}, Test Loss: {epoch_test_loss:.4f}, Accuracy: {epoch_accuracy:.4f}")
+        print(f"\r[Epoch {epoch+1}/{epochs}] Loss: {epoch_loss:.4f}, Test Loss: {epoch_test_loss:.4f}, Accuracy: {epoch_accuracy:.4f}                                       ")
         model_path = os.path.join("model", wandb.run.name, f"model_{epoch+1}.safetensors")
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         save_file(model.state_dict(), model_path)

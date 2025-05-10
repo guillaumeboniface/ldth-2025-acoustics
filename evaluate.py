@@ -1,6 +1,6 @@
 from sklearn.metrics import classification_report, confusion_matrix
 from model import NoiseClassifier, MelClassifier, TinyMelClassifier
-from dataset import LDTH2025Dataset, LDTH2025DatasetMel
+from dataset import LDTH2025Dataset, LDTH2025DatasetMel, LDTH2025DatasetRaw
 import torch
 from torch.utils.data import DataLoader
 from safetensors.torch import load_file
@@ -38,10 +38,10 @@ def scores(y_true, y_pred):
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    RUN_NAME = "skilled-aardvark-11"
+    RUN_NAME = "desert-voice-8"
     EPOCH = 100
 
-    model = TinyMelClassifier().to(device)
+    model = MelClassifier().to(device)
     model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
     model.to(device)
     model.eval()
@@ -76,6 +76,27 @@ if __name__ == "__main__":
             audio = audio.to(device)
             mask = mask.to(device)
             output = model(audio, mask)
+            y_true.extend(label.cpu().numpy())
+            y_pred.extend(output.argmax(dim=1).cpu().numpy())
+    
+    scores(y_true, y_pred)
+
+    RUN_NAME = "stellar-vortex-13"
+    EPOCH = 100
+
+    model = TinyMelClassifier().to(device)
+    model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
+    model.to(device)
+    model.eval()
+    test_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="test")
+    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    y_true = []
+    y_pred = []
+    with torch.no_grad():
+        for batch in test_loader:
+            mel, label = batch
+            mel = mel.to(device)
+            output = model(mel)
             y_true.extend(label.cpu().numpy())
             y_pred.extend(output.argmax(dim=1).cpu().numpy())
     
