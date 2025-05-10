@@ -1,5 +1,5 @@
 from sklearn.metrics import classification_report, confusion_matrix
-from model import NoiseClassifier, MelClassifier
+from model import NoiseClassifier, MelClassifier, TinyMelClassifier
 from dataset import LDTH2025Dataset, LDTH2025DatasetMel
 import torch
 from torch.utils.data import DataLoader
@@ -38,10 +38,10 @@ def scores(y_true, y_pred):
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    RUN_NAME = "desert-voice-8"
+    RUN_NAME = "skilled-aardvark-11"
     EPOCH = 100
 
-    model = MelClassifier().to(device)
+    model = TinyMelClassifier().to(device)
     model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
     model.to(device)
     model.eval()

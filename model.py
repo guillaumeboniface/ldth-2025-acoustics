@@ -53,6 +53,45 @@ class MelClassifier(nn.Module):
         x = attn_output.mean(dim=1)
         x = self.fc_layer(x)
         return x
+
+class TinyMelClassifier(nn.Module):
+    def __init__(self, height=64, width=601):
+        super().__init__()
+        self.height = height
+        self.width = width
+        self.conv_layer = nn.Sequential(
+            nn.Conv2d(1, 4, kernel_size=3, padding=1),
+            nn.BatchNorm2d(4),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(4, 8, kernel_size=3, padding=1),
+            nn.BatchNorm2d(8),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(8, 16, kernel_size=3, padding=1),
+            nn.BatchNorm2d(16),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(16, 32, kernel_size=3, padding=1),
+            nn.BatchNorm2d(32),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.BatchNorm2d(64),
+            nn.ReLU(),
+            nn.MaxPool2d(2, 2),
+        )
+        self.fc_layer = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(64 * (height // 32) * (width // 32), 3)
+        )
+    
+    def forward(self, mel):
+        x = self.conv_layer(mel)
+        x = x.reshape(mel.shape[0], -1)
+        x = self.fc_layer(x)
+        return x
+    
     
 if __name__ == "__main__":
     model = NoiseClassifier()
@@ -62,4 +101,10 @@ if __name__ == "__main__":
 
     model = MelClassifier()
     dummy_mel = torch.randn(8, 1, 64, 601)
+    print(torch.tensor([param.numel() for param in model.parameters()]).sum())
+    print(model(dummy_mel).shape)
+
+    model = TinyMelClassifier()
+    dummy_mel = torch.randn(8, 1, 64, 601)
+    print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     print(model(dummy_mel).shape)

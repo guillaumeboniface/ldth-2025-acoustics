@@ -1,4 +1,4 @@
-from model import MelClassifier
+from model import MelClassifier, TinyMelClassifier
 from dataset import LDTH2025DatasetMel
 from torch.utils.data import DataLoader
 import torch
@@ -11,7 +11,7 @@ if __name__ == "__main__":
     torch.manual_seed(0)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = MelClassifier().to(device)
+    model = TinyMelClassifier().to(device)
     train_dataset = LDTH2025DatasetMel(data_path="data/raw", split="train")
     test_dataset = LDTH2025DatasetMel(data_path="data/raw", split="test")
 
