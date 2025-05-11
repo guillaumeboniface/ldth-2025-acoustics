@@ -1,5 +1,5 @@
 from model import TinyMelClassifier
-from dataset import LDTH2025DatasetRaw
+from dataset import LDTH2025DatasetMel
 from torch.utils.data import DataLoader
 import torch
 import itertools
@@ -12,8 +12,8 @@ if __name__ == "__main__":
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = TinyMelClassifier().to(device)
-    train_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="train")
-    test_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="test")
+    train_dataset = LDTH2025DatasetMel(data_path="data/raw", split="train")
+    test_dataset = LDTH2025DatasetMel(data_path="data/raw", split="test")
 
     batch_size = 16
     epochs = 100

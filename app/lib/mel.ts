@@ -88,7 +88,12 @@ export function melSpectrogram(
     fMax = sampleRate / 2,
   } = options;
 
-  const spec = stft(signal, nFft, hopLength); // [frames][freq]
+  // Pad signal by nFft // 2 on both sides (to match torchaudio)
+  const pad = Math.floor(nFft / 2);
+  const padded = new Float32Array(signal.length + 2 * pad);
+  padded.set(signal, pad);
+
+  const spec = stft(padded, nFft, hopLength); // [frames][freq]
   const filterbank = createMelFilterbank(sampleRate, nFft, nMels, fMin, fMax);
   // Apply mel filterbank
   const melSpec = spec.map(frame => {

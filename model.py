@@ -18,7 +18,7 @@ class NoiseClassifier(nn.Module):
         return x
     
 class MelClassifier(nn.Module):
-    def __init__(self, height=64, width=601):
+    def __init__(self, height=64, width=862):
         super().__init__()
         self.height = height
         self.width = width
@@ -56,12 +56,10 @@ class MelClassifier(nn.Module):
         return x
 
 class TinyMelClassifier(nn.Module):
-    def __init__(self, height=64, width=1103):
+    def __init__(self, height=64, width=862):
         super().__init__()
         self.height = height
         self.width = width
-        self.mel_spectrogram = T.MelSpectrogram(sample_rate=44100, n_fft=400, hop_length=200, n_mels=64)
-        self.log_mel_spectrogram = T.AmplitudeToDB()
         self.conv_layer = nn.Sequential(
             nn.Conv2d(1, 4, kernel_size=3, padding=1),
             nn.BatchNorm2d(4),
@@ -89,11 +87,9 @@ class TinyMelClassifier(nn.Module):
             nn.Linear(64 * (height // 32) * (width // 32), 3)
         )
     
-    def forward(self, audio):
-        x = self.mel_spectrogram(audio)
-        x = self.log_mel_spectrogram(x)
-        x = self.conv_layer(x)
-        x = x.reshape(x.shape[0], -1)
+    def forward(self, mel):
+        x = self.conv_layer(mel)
+        x = x.reshape(mel.shape[0], -1)
         x = self.fc_layer(x)
         return x
     
@@ -105,11 +101,11 @@ if __name__ == "__main__":
     print(model(dummy_audio, dummy_mask).shape)
 
     model = MelClassifier()
-    dummy_mel = torch.randn(8, 1, 64, 601)
+    dummy_mel = torch.randn(8, 1, 64, 862)
     print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     print(model(dummy_mel).shape)
 
     model = TinyMelClassifier()
-    dummy_mel = torch.randn(8, 1, 220500)
+    dummy_mel = torch.randn(8, 1, 64, 862)
     print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     print(model(dummy_mel).shape)
