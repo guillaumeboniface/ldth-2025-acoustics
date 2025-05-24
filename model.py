@@ -2,6 +2,7 @@ from transformers import EncodecModel
 from torch import nn
 import torch
 from torchaudio import transforms as T
+import math
 
 class NoiseClassifier(nn.Module):
     def __init__(self):
@@ -56,11 +57,11 @@ class MelClassifier(nn.Module):
         return x
 
 class TinyMelClassifier(nn.Module):
-    def __init__(self, height=64, width=1103):
+    def __init__(self, audio_length=220500, n_fft=400, hop_length=200, n_mels=64):
         super().__init__()
-        self.height = height
-        self.width = width
-        self.mel_spectrogram = T.MelSpectrogram(sample_rate=44100, n_fft=400, hop_length=200, n_mels=64)
+        self.height = n_mels
+        self.width = math.ceil(audio_length / hop_length)
+        self.mel_spectrogram = T.MelSpectrogram(sample_rate=44100, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
         self.log_mel_spectrogram = T.AmplitudeToDB()
         self.conv_layer = nn.Sequential(
             nn.Conv2d(1, 4, kernel_size=3, padding=1),
@@ -86,30 +87,38 @@ class TinyMelClassifier(nn.Module):
         )
         self.fc_layer = nn.Sequential(
             nn.Dropout(0.5),
-            nn.Linear(64 * (height // 32) * (width // 32), 3)
+            nn.Linear(64 * (self.height // 32) * (self.width // 32), 3)
         )
     
     def forward(self, audio):
         x = self.mel_spectrogram(audio)
         x = self.log_mel_spectrogram(x)
+        print(x.shape)
         x = self.conv_layer(x)
+        print(x.shape)
         x = x.reshape(x.shape[0], -1)
+        print(x.shape)
         x = self.fc_layer(x)
         return x
     
     
 if __name__ == "__main__":
-    model = NoiseClassifier()
-    dummy_audio = torch.randn(8, 1, 120000)
-    dummy_mask = torch.ones(8, 1, 120000)
-    print(model(dummy_audio, dummy_mask).shape)
+    # model = NoiseClassifier()
+    # dummy_audio = torch.randn(8, 1, 120000)
+    # dummy_mask = torch.ones(8, 1, 120000)
+    # print(model(dummy_audio, dummy_mask).shape)
 
-    model = MelClassifier()
-    dummy_mel = torch.randn(8, 1, 64, 601)
+    # model = MelClassifier()
+    # dummy_mel = torch.randn(8, 1, 64, 601)
+    # print(torch.tensor([param.numel() for param in model.parameters()]).sum())
+    # print(model(dummy_mel).shape)
+
+    model = TinyMelClassifier()
+    dummy_mel = torch.randn(8, 1, 220500)
     print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     print(model(dummy_mel).shape)
 
-    model = TinyMelClassifier()
+    model = TinyMelClassifier(n_fft=2048, hop_length=1024, n_mels=128)
     dummy_mel = torch.randn(8, 1, 220500)
     print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     print(model(dummy_mel).shape)
