@@ -12,6 +12,7 @@ dependencies = [
     "soundfile>=0.13.1",
     "texttable>=1.7.0",
     "tqdm>=4.67.1",
+    "transformers>=4.51.3",
     "types-requests>=2.32.0.20250328",
     "types-tqdm>=4.67.0.20250417",
 ]

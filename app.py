@@ -50,7 +50,7 @@ if __name__ == "__main__":
     frame.grid(row=0, column=0, sticky=(tk.W, tk.E, tk.N, tk.S))
     
     # Create a label for the color display
-    color_label = tk.Label(frame, width=30, height=10)
+    color_label = tk.Label(frame, width=120, height=40)  # 4x larger (30*4=120, 10*4=40)
     color_label.grid(row=0, column=0, padx=5, pady=5)
     
     # Create a label for the class number
@@ -70,7 +70,7 @@ if __name__ == "__main__":
                 if len(audio_buffer) >= buffer_size:
                     # Convert buffer to numpy array, then to torch tensor
                     np_audio = np.array(audio_buffer, dtype=np.float32)
-                    torch_audio = torch.from_numpy(np_audio)[:buffer_size].unsqueeze(0).unsqueeze(0)
+                    torch_audio = torch.from_numpy(np_audio)[-buffer_size:].unsqueeze(0).unsqueeze(0)
                     # torch_audio now contains the last 5 seconds of audio as a 1D tensor
                     # You can now use torch_audio for further processing
                     with torch.no_grad():

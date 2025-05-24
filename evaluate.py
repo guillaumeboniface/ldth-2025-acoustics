@@ -7,6 +7,7 @@ from safetensors.torch import load_file
 import matplotlib.pyplot as plt
 import seaborn as sns
 import numpy as np
+from time import time
 
 def scores(y_true, y_pred):
     # Calculate confusion matrix
@@ -38,48 +39,52 @@ def scores(y_true, y_pred):
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    RUN_NAME = "desert-voice-8"
-    EPOCH = 100
+    # RUN_NAME = "desert-voice-8"
+    # EPOCH = 100
 
-    model = MelClassifier().to(device)
-    model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
-    model.to(device)
-    model.eval()
-    test_dataset = LDTH2025DatasetMel(data_path="data/raw", split="test")
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
-    y_true = []
-    y_pred = []
-    with torch.no_grad():
-        for batch in test_loader:
-            mel, label = batch
-            mel = mel.to(device)
-            output = model(mel)
-            y_true.extend(label.cpu().numpy())
-            y_pred.extend(output.argmax(dim=1).cpu().numpy())
-    
-    scores(y_true, y_pred)
+    # model = MelClassifier().to(device)
+    # model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
+    # model.to(device)
+    # model.eval()
+    # test_dataset = LDTH2025DatasetMel(data_path="data/raw", split="test")
+    # test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    # y_true = []
+    # y_pred = []
+    # start_time = time()
+    # with torch.no_grad():
+    #     for batch in test_loader:
+    #         mel, label = batch
+    #         mel = mel.to(device)
+    #         output = model(mel)
+    #         y_true.extend(label.cpu().numpy())
+    #         y_pred.extend(output.argmax(dim=1).cpu().numpy())
+    # print(f"Time taken: {time() - start_time} seconds")
+    # print(f"Time per sample: {(time() - start_time) / len(test_loader)} seconds")
+    # scores(y_true, y_pred)
 
-    RUN_NAME = "likely-grass-9"
-    EPOCH = 30
+    # RUN_NAME = "likely-grass-9"
+    # EPOCH = 30
 
-    model = NoiseClassifier().to(device)
-    model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
-    model.to(device)
-    model.eval()
-    test_dataset = LDTH2025Dataset(data_path="data/raw", split="test")
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
-    y_true = []
-    y_pred = []
-    with torch.no_grad():
-        for batch in test_loader:
-            audio, mask, label = batch
-            audio = audio.to(device)
-            mask = mask.to(device)
-            output = model(audio, mask)
-            y_true.extend(label.cpu().numpy())
-            y_pred.extend(output.argmax(dim=1).cpu().numpy())
-    
-    scores(y_true, y_pred)
+    # model = NoiseClassifier().to(device)
+    # model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
+    # model.to(device)
+    # model.eval()
+    # test_dataset = LDTH2025Dataset(data_path="data/raw", split="test")
+    # test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    # y_true = []
+    # y_pred = []
+    # start_time = time()
+    # with torch.no_grad():
+    #     for batch in test_loader:
+    #         audio, mask, label = batch
+    #         audio = audio.to(device)
+    #         mask = mask.to(device)
+    #         output = model(audio, mask)
+    #         y_true.extend(label.cpu().numpy())
+    #         y_pred.extend(output.argmax(dim=1).cpu().numpy())
+    # print(f"Time taken: {time() - start_time} seconds")
+    # print(f"Time per sample: {(time() - start_time) / len(test_loader)} seconds")    
+    # scores(y_true, y_pred)
 
     RUN_NAME = "stellar-vortex-13"
     EPOCH = 100
@@ -89,9 +94,10 @@ if __name__ == "__main__":
     model.to(device)
     model.eval()
     test_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="test")
-    test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=1, shuffle=False)
     y_true = []
     y_pred = []
+    start_time = time()
     with torch.no_grad():
         for batch in test_loader:
             mel, label = batch
@@ -99,6 +105,7 @@ if __name__ == "__main__":
             output = model(mel)
             y_true.extend(label.cpu().numpy())
             y_pred.extend(output.argmax(dim=1).cpu().numpy())
-    
+    print(f"Time taken: {time() - start_time} seconds")
+    print(f"Time per sample: {(time() - start_time) / len(test_loader)} seconds")    
     scores(y_true, y_pred)
 
