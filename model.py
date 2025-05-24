@@ -93,11 +93,8 @@ class TinyMelClassifier(nn.Module):
     def forward(self, audio):
         x = self.mel_spectrogram(audio)
         x = self.log_mel_spectrogram(x)
-        print(x.shape)
         x = self.conv_layer(x)
-        print(x.shape)
         x = x.reshape(x.shape[0], -1)
-        print(x.shape)
         x = self.fc_layer(x)
         return x
     
