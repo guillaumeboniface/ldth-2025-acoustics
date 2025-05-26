@@ -98,6 +98,60 @@ class TinyMelClassifier(nn.Module):
         x = self.fc_layer(x)
         return x
     
+    def forward_with_spectrogram(self, audio):
+        x = self.mel_spectrogram(audio)
+        spectrogram = self.log_mel_spectrogram(x)
+        x = self.conv_layer(spectrogram)
+        x = x.reshape(x.shape[0], -1)
+        x = self.fc_layer(x)
+        return x, spectrogram
+
+class EncoderLayer(nn.Module):
+    def __init__(self, num_heads, d_model, d_ff, dropout=0.0):
+        super().__init__()
+        self.attention = nn.MultiheadAttention(d_model, num_heads, dropout=dropout)
+        self.feed_forward = nn.Sequential(
+            nn.Linear(d_model, d_ff),
+            nn.ReLU(),
+            nn.Linear(d_ff, d_model)
+        )
+        self.norm1 = nn.LayerNorm(d_model)
+        self.norm2 = nn.LayerNorm(d_model)
+        self.dropout = nn.Dropout(dropout)
+    
+    def forward(self, x):
+        attn_output, attn_output_weights = self.attention(x, x, x)
+        x = self.norm1(x + self.dropout(attn_output))
+        ff_output = self.feed_forward(x)
+        x = self.norm2(x + self.dropout(ff_output))
+        return x, attn_output_weights
+
+class MelTransformerClassifier(nn.Module):
+    def __init__(self, n_fft=400, hop_length=200, n_mels=64):
+        super().__init__()
+        self.n_fft = n_fft
+        self.hop_length = hop_length
+        self.n_mels = n_mels
+        self.mel_spectrogram = T.MelSpectrogram(sample_rate=44100, n_fft=n_fft, hop_length=hop_length, n_mels=n_mels)
+        self.log_mel_spectrogram = T.AmplitudeToDB()
+        self.transformer = [EncoderLayer(num_heads=8, d_model=n_mels, d_ff=n_mels * 4) for _ in range(3)]
+        for i, layer in enumerate(self.transformer):
+            self.add_module(f"transformer_{i}", layer)
+        self.fc_layer = nn.Sequential(
+            nn.Dropout(0.5),
+            nn.Linear(n_mels, 3)
+        )
+    
+    def forward(self, audio):
+        x = self.mel_spectrogram(audio)
+        x = self.log_mel_spectrogram(x).squeeze(1).transpose(1, 2)
+        attn_weights = []
+        for layer in self.transformer:
+            x, attn_weight = layer(x)
+            attn_weights.append(attn_weight)
+        x = x.mean(dim=1)
+        x = self.fc_layer(x)
+        return x, attn_weights
     
 if __name__ == "__main__":
     # model = NoiseClassifier()
@@ -119,3 +173,8 @@ if __name__ == "__main__":
     dummy_mel = torch.randn(8, 1, 220500)
     print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     print(model(dummy_mel).shape)
+
+    model = MelTransformerClassifier()
+    dummy_mel = torch.randn(8, 1, 220500)
+    print(torch.tensor([param.numel() for param in model.parameters()]).sum())
+    print(model(dummy_mel)[0].shape)
