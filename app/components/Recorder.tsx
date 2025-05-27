@@ -131,11 +131,31 @@ const Recorder: React.FC = () => {
   }, []);
 
   return (
-    <div>
+    <div 
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        width: '100vw',
+        height: '100vh',
+        backgroundColor: classLabel === 1 ? '#ff0000' : '#00ff00',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        fontSize: '24px',
+        fontWeight: 'bold',
+        color: 'white',
+        textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+        zIndex: 9999
+      }}
+    >
       {classLabel === -1 ? (
         <div>Recording and processing 5s windows...</div>
       ) : (
-        <div>Class label: {classLabel}</div>
+        <div>
+          Class label: {classLabel}
+          {isProcessing && <div style={{ fontSize: '16px', marginTop: '10px' }}>Processing...</div>}
+        </div>
       )}
     </div>
   );
