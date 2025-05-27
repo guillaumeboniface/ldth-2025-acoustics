@@ -5,3 +5,4 @@ wandb
 model
 __pycache__
 venv
+spectrograms

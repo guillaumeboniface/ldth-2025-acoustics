@@ -49,6 +49,7 @@ def main():
         epoch_loss = []
         epoch_test_loss = []
         epoch_accuracy = []
+        model.train()
         for i, batch in enumerate(train_loader):
             mel, label = batch
             mel = mel.to(device)
@@ -62,6 +63,7 @@ def main():
             
         epoch_loss = sum(epoch_loss) / len(epoch_loss)
 
+        model.eval()
         for i, batch in enumerate(test_loader):
             mel, label = batch
             mel = mel.to(device)
@@ -85,4 +87,4 @@ if __name__ == "__main__":
     sweep_id = wandb.sweep(sweep=sweep_configuration, project=project)
 
     # Start the sweep job
-    wandb.agent(sweep_id, function=main, count=4)
+    wandb.agent(sweep_id, function=main)

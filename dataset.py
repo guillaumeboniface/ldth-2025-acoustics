@@ -134,5 +134,4 @@ if __name__ == "__main__":
     print(len(raw_dataset))
     print(raw_dataset[0])
     print("Raw: ", raw_dataset[0][0].shape)
-    
-        
+    print(raw_dataset.classes)

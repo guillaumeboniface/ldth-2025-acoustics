@@ -8,6 +8,8 @@ class NoiseClassifier(nn.Module):
     def __init__(self):
         super().__init__()
         self.encoder = EncodecModel.from_pretrained("facebook/encodec_24khz")
+        for params in self.encoder.parameters():
+            params.requires_grad = False
         self.batch_norm = nn.BatchNorm1d(375 * 2)
         self.fc = nn.Linear(375 * 2 * 1200, 3)
 
@@ -157,6 +159,7 @@ if __name__ == "__main__":
     # model = NoiseClassifier()
     # dummy_audio = torch.randn(8, 1, 120000)
     # dummy_mask = torch.ones(8, 1, 120000)
+    # print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     # print(model(dummy_audio, dummy_mask).shape)
 
     # model = MelClassifier()
@@ -169,12 +172,12 @@ if __name__ == "__main__":
     print(torch.tensor([param.numel() for param in model.parameters()]).sum())
     print(model(dummy_mel).shape)
 
-    model = TinyMelClassifier(n_fft=2048, hop_length=1024, n_mels=128)
-    dummy_mel = torch.randn(8, 1, 220500)
-    print(torch.tensor([param.numel() for param in model.parameters()]).sum())
-    print(model(dummy_mel).shape)
+    # model = TinyMelClassifier(n_fft=2048, hop_length=1024, n_mels=128)
+    # dummy_mel = torch.randn(8, 1, 220500)
+    # print(torch.tensor([param.numel() for param in model.parameters()]).sum())
+    # print(model(dummy_mel).shape)
 
-    model = MelTransformerClassifier()
-    dummy_mel = torch.randn(8, 1, 220500)
-    print(torch.tensor([param.numel() for param in model.parameters()]).sum())
-    print(model(dummy_mel)[0].shape)
+    # model = MelTransformerClassifier()
+    # dummy_mel = torch.randn(8, 1, 220500)
+    # print(torch.tensor([param.numel() for param in model.parameters()]).sum())
+    # print(model(dummy_mel)[0].shape)

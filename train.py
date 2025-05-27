@@ -15,12 +15,12 @@ if __name__ == "__main__":
     train_dataset = LDTH2025Dataset(data_path="data/raw", split="train")
     test_dataset = LDTH2025Dataset(data_path="data/raw", split="test")
 
-    batch_size = 16
+    batch_size = 18
     epochs = 100
     learning_rate = 1e-4
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=False)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     criterion = torch.nn.CrossEntropyLoss()

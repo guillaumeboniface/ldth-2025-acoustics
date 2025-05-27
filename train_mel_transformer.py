@@ -1,4 +1,4 @@
-from model import TinyMelClassifier
+from model import MelTransformerClassifier
 from dataset import LDTH2025DatasetRaw
 from torch.utils.data import DataLoader
 import torch
@@ -11,16 +11,16 @@ if __name__ == "__main__":
     torch.manual_seed(0)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = TinyMelClassifier().to(device)
-    train_dataset = LDTH2025DatasetRaw(data_path="data/augmented", split="train")
-    test_dataset = LDTH2025DatasetRaw(data_path="data/augmented", split="test")
+    model = MelTransformerClassifier().to(device)
+    train_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="train")
+    test_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="test")
 
-    batch_size = 18
+    batch_size = 16
     epochs = 100
     learning_rate = 1e-4
 
     train_loader = DataLoader(train_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=False)
+    test_loader = DataLoader(test_dataset, batch_size=batch_size, num_workers=4, shuffle=True)
 
     optimizer = torch.optim.Adam(model.parameters(), lr=learning_rate)
     criterion = torch.nn.CrossEntropyLoss()
@@ -41,7 +41,7 @@ if __name__ == "__main__":
             mel = mel.to(device)
             label = label.to(device)
             optimizer.zero_grad()
-            output = model(mel)
+            output, attn_weights = model(mel)
             loss = criterion(output, label)
             loss.backward()
             optimizer.step()
@@ -50,7 +50,7 @@ if __name__ == "__main__":
                 test_mel, test_label = test_batch
                 test_mel = test_mel.to(device)
                 test_label = test_label.to(device)
-                test_output = model(test_mel)
+                test_output, test_attn_weights = model(test_mel)
                 test_loss = criterion(test_output, test_label)
                 accuracy = (test_output.argmax(dim=1) == test_label).float().mean().item()
             epoch_loss.append(loss.item())
@@ -66,7 +66,7 @@ if __name__ == "__main__":
         epoch_loss = sum(epoch_loss) / len(epoch_loss)
         epoch_test_loss = sum(epoch_test_loss) / len(epoch_test_loss)
         epoch_accuracy = sum(epoch_accuracy) / len(epoch_accuracy)
-        print(f"\r[Epoch {epoch+1}/{epochs}] Loss: {epoch_loss:.4f}, Test Loss: {epoch_test_loss:.4f}, Accuracy: {epoch_accuracy:.4f}                                       ")
+        print(f"\r[Epoch {epoch+1}/{epochs}] Loss: {epoch_loss:.4f}, Test Loss: {epoch_test_loss:.4f}, Accuracy: {epoch_accuracy:.4f}                   ")
         model_path = os.path.join("model", wandb.run.name, f"model_{epoch+1}.safetensors")
         os.makedirs(os.path.dirname(model_path), exist_ok=True)
         save_file(model.state_dict(), model_path)

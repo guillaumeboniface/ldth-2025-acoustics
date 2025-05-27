@@ -1,5 +1,5 @@
 from sklearn.metrics import classification_report, confusion_matrix
-from model import NoiseClassifier, MelClassifier, TinyMelClassifier
+from model import NoiseClassifier, MelClassifier, TinyMelClassifier, MelTransformerClassifier
 from dataset import LDTH2025Dataset, LDTH2025DatasetMel, LDTH2025DatasetRaw
 import torch
 from torch.utils.data import DataLoader
@@ -16,21 +16,34 @@ def scores(y_true, y_pred):
     # Create figure and axis
     plt.figure(figsize=(10, 8))
     
-    # Create heatmap using seaborn
+    # Create heatmap using seaborn with larger font sizes
     sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
                 xticklabels=test_dataset.classes,
-                yticklabels=test_dataset.classes)
+                yticklabels=test_dataset.classes,
+                annot_kws={'size': 14},  # Size for the numbers in the cells
+                cbar_kws={'label': 'Count'})
     
-    # Add labels and title
-    plt.xlabel('Predicted')
-    plt.ylabel('True')
-    plt.title('Confusion Matrix')
+    # Add labels and title with larger font sizes
+    plt.xlabel('Predicted', fontsize=14)
+    plt.ylabel('True', fontsize=14)
+    plt.title('Confusion Matrix', fontsize=16)
+    
+    # Make background transparent
+    plt.gca().set_facecolor('none')
+    plt.gcf().set_facecolor('none')
+    
+    # Increase tick label sizes
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
     
     # Adjust layout to prevent label cutoff
     plt.tight_layout()
     
-    # Save the plot
-    plt.savefig(f'confusion_matrix_{RUN_NAME}_epoch_{EPOCH}.png')
+    # Save the plot with transparent background
+    plt.savefig(f'confusion_matrix_{RUN_NAME}_epoch_{EPOCH}.png', 
+                transparent=True,
+                bbox_inches='tight',
+                pad_inches=0.1)
     plt.close()
     
     # Print metrics
@@ -38,6 +51,7 @@ def scores(y_true, y_pred):
 
 if __name__ == "__main__":
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    torch.manual_seed(0)
 
     # RUN_NAME = "desert-voice-8"
     # EPOCH = 100
@@ -108,4 +122,28 @@ if __name__ == "__main__":
     print(f"Time taken: {time() - start_time} seconds")
     print(f"Time per sample: {(time() - start_time) / len(test_loader)} seconds")    
     scores(y_true, y_pred)
+
+    # RUN_NAME = "valiant-serenity-27"
+    # EPOCH = 95
+
+    # model = MelTransformerClassifier().to(device)
+    # model.load_state_dict(load_file(f"model/{RUN_NAME}/model_{EPOCH}.safetensors"))
+    # model.to(device)
+    # model.eval()
+    # test_dataset = LDTH2025DatasetRaw(data_path="data/raw", split="test")
+    # test_loader = DataLoader(test_dataset, batch_size=16, shuffle=False)
+    # y_true = []
+    # y_pred = []
+    # start_time = time()
+    # with torch.no_grad():
+    #     for batch in test_loader:
+    #         audio, label = batch
+    #         audio = audio.to(device)
+    #         output, attn_weights = model(audio)
+    #         y_true.extend(label.cpu().numpy())
+    #         y_pred.extend(output.argmax(dim=1).cpu().numpy())
+    # print(f"Time taken: {time() - start_time} seconds")
+    # print(f"Time per sample: {(time() - start_time) / len(test_loader)} seconds")    
+    # scores(y_true, y_pred)
+    
 

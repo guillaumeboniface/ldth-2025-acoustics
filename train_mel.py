@@ -1,4 +1,4 @@
-from model import MelClassifier
+from model import MelClassifier, MelTransformerClassifier
 from dataset import LDTH2025DatasetMel
 from torch.utils.data import DataLoader
 import torch
@@ -36,6 +36,7 @@ if __name__ == "__main__":
         epoch_test_loss = []
         epoch_accuracy = []
         for i, (batch, test_batch) in enumerate(zip(train_loader, itertools.cycle(test_loader))):
+            model.train()
             mel, label = batch
             mel = mel.to(device)
             label = label.to(device)
@@ -45,6 +46,7 @@ if __name__ == "__main__":
             loss.backward()
             optimizer.step()
             with torch.no_grad():
+                model.eval()
                 test_mel, test_label = test_batch
                 test_mel = test_mel.to(device)
                 test_label = test_label.to(device)
