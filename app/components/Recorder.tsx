@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from 'react';
-import { melSpectrogram } from '../lib/mel'; // adjust path as needed
+import { mel_spectrogram_db } from "rust-melspec-wasm";
 import { loadOnnxModel, runOnnxInference } from '../lib/onnx'; // add this import
 
 const SAMPLE_RATE = 44100; // or 44100, but match your model
@@ -7,6 +7,7 @@ const WINDOW_SECONDS = 5;
 const BUFFER_SIZE = SAMPLE_RATE * WINDOW_SECONDS;
 const MODEL_URL = '/tiny_mel_classifier.onnx'; // adjust path as needed
 const ONNX_INPUT_NAME = 'mel'; // change if your model uses a different input name
+const EXPECTED_SEQ_LEN = 862; // Expected sequence length by the model
 
 const Recorder: React.FC = () => {
   const audioBufferRef = useRef<Float32Array>(new Float32Array(BUFFER_SIZE));
@@ -17,6 +18,7 @@ const Recorder: React.FC = () => {
     let audioContext: AudioContext | null = null;
     let processor: ScriptProcessorNode | null = null;
     let source: MediaStreamAudioSourceNode | null = null;
+
 
     // Load ONNX model once
     loadOnnxModel(MODEL_URL);
@@ -44,20 +46,28 @@ const Recorder: React.FC = () => {
         if (offset >= BUFFER_SIZE) {
           const chunk = new Float32Array(buffer);
 
-          const mel = melSpectrogram(chunk, SAMPLE_RATE, {
-            nFft: 512,
-            hopLength: 256,
-            nMels: 64,
-            fMin: 0,
-            fMax: SAMPLE_RATE / 2,
-          });
+          const mel = mel_spectrogram_db(SAMPLE_RATE, chunk, 512, 512, 256, 0, SAMPLE_RATE / 2, 64, 120);
           console.log('Mel spectrogram shape:', mel.length, 'frames ×', mel[0]?.length, 'nMels');
+
+          // Pad or truncate to expected sequence length
+          let paddedMel = mel;
+          if (mel.length < EXPECTED_SEQ_LEN) {
+            // Pad with the last frame
+            const lastFrame = mel[mel.length - 1];
+            const paddingFrames = EXPECTED_SEQ_LEN - mel.length;
+            paddedMel = [...mel, ...Array(paddingFrames).fill(lastFrame)];
+            console.log(`Padded mel from ${mel.length} to ${paddedMel.length} frames`);
+          } else if (mel.length > EXPECTED_SEQ_LEN) {
+            // Truncate to expected length
+            paddedMel = mel.slice(0, EXPECTED_SEQ_LEN);
+            console.log(`Truncated mel from ${mel.length} to ${paddedMel.length} frames`);
+          }
 
           // mel: [frames][nMels] => transpose to [nMels][frames]
           const nMels = 64;
-          const seqLen = mel.length;
+          const seqLen = paddedMel.length;
           const melTransposed = Array.from({ length: nMels }, (_, m) =>
-            mel.map(frame => frame[m])
+            paddedMel.map(frame => frame[m])
           );
 
           // Flatten to Float32Array in (1, 64, seqLen) order
@@ -72,7 +82,8 @@ const Recorder: React.FC = () => {
           try {
             const start = performance.now();
             const results = await runOnnxInference(ONNX_INPUT_NAME, inputArray, [1, 1, nMels, seqLen]);
-            const argmax = results.output.data.indexOf(Math.max(...results.output.data));
+            const outputData = Array.from(results.output.data as Float32Array);
+            const argmax = outputData.indexOf(Math.max(...outputData));
             const end = performance.now();
             console.log('ONNX results:', results, 'Argmax:', argmax, 'Time:', end - start);
             setClassLabel(argmax);
