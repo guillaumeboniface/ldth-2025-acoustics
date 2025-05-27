@@ -138,14 +138,14 @@ const Recorder: React.FC = () => {
         left: 0,
         width: '100vw',
         height: '100vh',
-        backgroundColor: classLabel === 1 ? '#ff0000' : '#00ff00',
+        backgroundColor: classLabel === -1 ? '#ffffff' : (classLabel === 1 ? '#ff0000' : '#00ff00'),
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
         fontSize: '24px',
         fontWeight: 'bold',
-        color: 'white',
-        textShadow: '2px 2px 4px rgba(0,0,0,0.5)',
+        color: classLabel === -1 ? 'black' : 'white',
+        textShadow: classLabel === -1 ? 'none' : '2px 2px 4px rgba(0,0,0,0.5)',
         zIndex: 9999
       }}
     >

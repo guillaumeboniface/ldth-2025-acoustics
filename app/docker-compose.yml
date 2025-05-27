@@ -1,0 +1,12 @@
+version: '3.8'
+
+services:
+  react-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    ports:
+      - "3000:80"
+    volumes:
+      - ./tiny_mel_classifier.onnx:/usr/share/nginx/html/tiny_mel_classifier.onnx:ro
+    restart: unless-stopped

@@ -1,6 +1,6 @@
 import Link from "next/link";
-import Layout from "../components/Layout";
-import Recorder from "../components/Recorder";
+import Layout from "../src/components/Layout";
+import Recorder from "../src/components/Recorder";
 import { useEffect } from "react";
 import init from "rust-melspec-wasm";
 
