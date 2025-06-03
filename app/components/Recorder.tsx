@@ -16,8 +16,21 @@ const Recorder: React.FC = () => {
   const isBufferFullRef = useRef(false);
   const [classLabel, setClassLabel] = useState<Number>(-1);
   const [isProcessing, setIsProcessing] = useState(false);
+  const [audioDevices, setAudioDevices] = useState<MediaDeviceInfo[]>([]);
+  const [selectedDeviceId, setSelectedDeviceId] = useState<string | null>(null);
 
   useEffect(() => {
+    // List audio input devices
+    navigator.mediaDevices.enumerateDevices().then((devices) => {
+      const mics = devices.filter((d) => d.kind === 'audioinput');
+      setAudioDevices(mics);
+      if (mics.length > 0) setSelectedDeviceId(mics[0].deviceId);
+    });
+  }, []);
+
+  useEffect(() => {
+    if (!selectedDeviceId) return;
+
     let audioContext: AudioContext | null = null;
     let processor: ScriptProcessorNode | null = null;
     let source: MediaStreamAudioSourceNode | null = null;
@@ -79,6 +92,7 @@ const Recorder: React.FC = () => {
         const outputData = Array.from(results.output.data as Float32Array);
         const argmax = outputData.indexOf(Math.max(...outputData));
         const end = performance.now();
+        console.log(outputData)
         console.log('ONNX results:', results, 'Argmax:', argmax, 'Time:', end - start);
         setClassLabel(argmax);
       } catch (err) {
@@ -88,7 +102,7 @@ const Recorder: React.FC = () => {
       }
     };
 
-    navigator.mediaDevices.getUserMedia({ audio: true }).then((stream) => {
+    navigator.mediaDevices.getUserMedia({ audio: { deviceId: selectedDeviceId, sampleRate: SAMPLE_RATE } }).then((stream) => {
       audioContext = new (window.AudioContext || (window as any).webkitAudioContext)({ sampleRate: SAMPLE_RATE });
       console.log('Actual audio context sample rate:', audioContext.sampleRate);
       source = audioContext.createMediaStreamSource(stream);
@@ -128,7 +142,7 @@ const Recorder: React.FC = () => {
       source?.disconnect();
       audioContext?.close();
     };
-  }, []);
+  }, [selectedDeviceId]); // re-run when device changes
 
   return (
     <div 
@@ -149,6 +163,20 @@ const Recorder: React.FC = () => {
         zIndex: 9999
       }}
     >
+      <div style={{ position: 'absolute', top: 20, left: 20, zIndex: 10000 }}>
+        <label htmlFor="mic-select" style={{ color: 'white', marginRight: 8 }}>Microphone:</label>
+        <select
+          id="mic-select"
+          value={selectedDeviceId ?? ''}
+          onChange={e => setSelectedDeviceId(e.target.value)}
+        >
+          {audioDevices.map((device) => (
+            <option key={device.deviceId} value={device.deviceId}>
+              {device.label || `Microphone ${device.deviceId}`}
+            </option>
+          ))}
+        </select>
+      </div>
       {classLabel === -1 ? (
         <div>Recording and processing 5s windows...</div>
       ) : (
